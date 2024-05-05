@@ -1,0 +1,340 @@
+2024.05.05
+
+main-js:
+import { createApp } from 'vue'
+import App from './App.vue'
+import router from "@/router/index.js";
+
+import 'bootstrap'
+import 'bootstrap/dist/css/bootstrap.min.css'
+
+
+const app= createApp(App)
+app.use(router)
+app.mount('#app')
+
+index.js:
+import {createRouter, createWebHistory} from "vue-router";
+import IndexView from "@/views/IndexView.vue";
+import BevetView from "@/views/BevetView.vue";
+import KiadasView from "@/views/KiadasView.vue";
+import KeszletView from "@/views/KeszletView.vue";
+
+const routes = [
+    {
+        name: "Index",
+        path: "/",
+        component: IndexView
+    },
+    {
+        name: "Kiadas",
+        path: "/kiadas",
+        component: KiadasView
+    },
+    {
+        name: "Bevet",
+        path: "/bevet",
+        component: BevetView
+    },
+    {
+        name: "Keszlet",
+        path: "/keszlet",
+        component: KeszletView
+    },
+]
+
+const router = createRouter(
+    {
+        history: createWebHistory(),
+        routes
+    }
+);
+
+export default router;
+
+http.js:
+import axios from "axios";
+
+const http = axios.create({
+    baseURL: "http://localhost:8000",
+})
+
+export {http};
+
+IndexView.vue:
+<template>
+  <div class="container-fluid">
+    <h5>Kérlek válassz a fenti lehetőségek közül!</h5>
+  </div>
+</template>
+
+<script>
+import {http} from "@/utils/http.js";
+import {RouterLink} from "vue-router";
+
+export default {
+  name: "IndexView",
+  components: {
+    http,
+    RouterLink
+  }
+}
+</script>
+
+<style scoped>
+
+</style>
+
+KiadasView.vue:
+<template>
+  <div class="container-fluid">
+    <h1>SZÁLLÍTÓLEVÉL</h1>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Név</th>
+          <th>Mennyiség</th>
+          <th>SzavIdő</th>
+          <th>Műveletek</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="item in szallit" :key="item.id">
+          <td>{{item.id}}</td>
+          <td>{{item.name}}</td>
+          <td>{{item.invQty}}</td>
+          <td>{{item.consumable}}</td>
+          <td><button class="btn btn-danger" @click="szerkesztItem(item.id)">Mégsem</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</template>
+
+<script>
+
+export default {
+  name: "KiadasView",
+  data() {
+    return{
+      szallit:[]
+    }
+  },
+
+  methods: {
+    getSzallit(){
+      this.szallit=JSON.parse(localStorage.getItem('szallit'))??[];
+    },
+    szerkesztItem(id){
+      const index = this.szallit.findIndex(item=> item.id === id);
+      this.szallit.splice(index, 1);
+      localStorage.setItem('szallit', JSON.stringify(this.szallit));
+    }
+  },
+  mounted() {
+    this.getSzallit();
+  },
+
+}
+</script>
+
+<style scoped>
+
+</style>
+
+BevetView.vue:
+<template>
+  <div class="container-fluid">
+    <h1>Bevételezés</h1>
+
+    <table>
+      <thead>
+      <tr>
+        <th>ID</th>
+        <th>Név</th>
+        <th>Egység</th>
+        <th>Műveletek</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr v-for="item in atvett" :key="item.id">
+        <td>{{item.id}}</td>
+        <td>{{item.name}}</td>
+        <td>{{item.egyseg}}</td>
+        <td><button class="btn btn-warning" @click="addToAtvett(item.id)">Elfogad</button></td>
+      </tr>
+      </tbody>
+    </table>
+    <button class="btn btn-success">Készlethez adás</button>
+  </div>
+</template>
+
+<script>
+import {http} from "@/utils/http.js";
+import {RouterLink} from "vue-router";
+export default {
+  name: "BevetView",
+  data(){
+    return{
+      atvett: []
+    }
+  },
+  components: {
+    http,
+    RouterLink,
+  },
+  methods: {
+    addToAtvett(id){
+      const item =this.items.find(item=>item.id===id);
+      this.atvett.push(item);
+      localStorage.setItem('atvett', JSON.stringify(this.atvett));
+    }
+  }
+}
+</script>
+
+<style scoped>
+
+</style>
+
+KeszletView.vue:
+<template>
+  <div class="container-fluid">
+    <h1>Készletek!</h1>
+    <div>
+      <table class="table table-striped">
+        <thead>
+        <tr>
+          <th>Id</th>
+          <th>TermékNév</th>
+          <th>MennyEg</th>
+          <th>Egyseg</th>
+          <th>Típus_Id</th>
+          <th>Készl_Menny</th>
+          <th>Egyeb</th>
+          <th>Gyártó_Id</th>
+          <th>SzavIdő</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="item in items" :key="item.id">
+          <td>{{ item.id }}</td>
+          <td>{{ item.name }}</td>
+          <td>{{ item.quantity_unit }}</td>
+          <td>{{ item.unit }}</td>
+          <td>{{ item.type_id }}</td>
+          <td>{{ item.invQty }}</td>
+          <td>{{ item.other }}</td>
+          <td>{{ item.manufacturer_id }}</td>
+          <td>{{ item.consumable }}</td>
+          <td><button class="btn btn-warning" @click="openModal(item)">Szerkesztés</button></td>
+          <td><button class="btn btn-success" @add-to-szallit="addToSzallit">Szállítani</button> </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</template>
+
+<script>
+import {http} from "@/utils/http.js";
+import {RouterLink} from "vue-router";
+import IndexView from "@/views/IndexView.vue";
+
+export default {
+  name: "KeszletView",
+
+  data() {
+    return {
+      szallit: [],
+      items: [], // Itt tároljuk majd az adatbázisból kapott elemeket
+      selectedProduct: "",
+      szallitasiMennyiseg: ""
+    };
+  },
+
+  components: {
+    http,
+    RouterLink,
+    IndexView
+  },
+
+  methods: {
+    async getData() {
+      try {
+        const response = await http.get('/api/products');
+        console.log('Kapott adatok:', response.data);
+        this.items = response.data.data;
+      } catch (error) {
+        console.error("Hiba történt a készletek lekérdezése közben:", error);
+      }
+    },
+
+    openModal(item) {
+      this.selectedProduct = item;
+      $('#szallitasModal').modal('show');
+    },
+
+    getSzallit(){
+      this.szallit=JSON.parse(localStorage.getItem('szallit'))??[];
+    },
+    addToSzallit(id){
+      const item =this.items.find(item=>item.id===id);
+      this.szallit.push(item);
+      localStorage.setItem('szallit', JSON.stringify(this.szallit));
+    }
+  },
+  mounted() {
+    // Itt hívjuk meg az API-t, hogy lekérjük az adatokat az adatbázisból
+    this.getData();
+    this.getSzallit();
+  }
+}
+</script>
+
+<style scoped>
+
+</style>
+
+NavBar.vue:
+<template>
+  <nav class="navbar navbar-expand-lg bg-primary">
+    <div class="container-fluid">
+      <router-link class="navbar-brand" to="/">Kezdolap</router-link>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <router-link class="nav-link text-white"  to="/bevet">Bevetelezes</router-link>
+          </li>
+          <li class="nav-item">
+            <router-link class="nav-link text-white" to="/kiadas">AruKiadas</router-link>
+          </li>
+          <li class="nav-item">
+            <router-link class="nav-link text-white" to="/keszlet">Keszletkezeles</router-link>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+</template>
+
+<script>
+import {RouterLink} from "vue-router";
+
+export default {
+  name: "NavBar",
+  components: {
+    RouterLink
+  }
+}
+</script>
+
+<style scoped>
+
+</style>

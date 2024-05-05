@@ -1,0 +1,21 @@
+17:40 Ezek az alap file-ok
+
+
+index.js
+
+http.js
+
+main.js
+
+app.vue
+
+NavBar.vue
+
+IndexView.vue
+
+BevetView.vue
+
+KiadasView.vue
+
+KeszletView.vue
+
